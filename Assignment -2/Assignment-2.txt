@@ -1,0 +1,105 @@
+pipeline {
+agent {
+label {
+            label 'built-in'
+			customWorkspace '/mnt/projects'
+
+}
+
+}
+
+stages {
+
+stage ('cloning source code') {
+steps {
+            sh "git clone https://github.com/nupur-londhe/game-of-life-nup.git"
+
+}
+}
+
+stage ('building source code') {
+
+steps {
+
+dir ("/mnt/projects/game-of-life-nup"){
+
+     sh "mvn install"
+}
+}
+
+
+}
+
+stage ('Deploying application on SLAVE-1') {
+steps {
+
+        sh "mv ohio.pem /mnt/projects/game-of-life-nup"
+
+}
+
+steps {  
+
+dir ("/mnt/projects/game-of-life-nup") {
+
+		sh "scp -i "ohio.pem" game-of-life-nup/gameoflife-web/target/gameoflife.war ec2-user@172.31.28.75:/mnt/servers/apache-tomcat-9.0.65/webapps"
+      
+       
+}			
+}
+
+
+}
+
+
+stage ('Deploying application on SLAVE-2') {
+steps {
+
+dir ("/mnt/projects/game-of-life-nup") {
+
+        sh "scp -i "ohio.pem" game-of-life-nup/gameoflife-web/target/gameoflife.war ec2-user@172.31.30.34:/mnt/servers/apache-tomcat-9.0.65/webapps"
+
+}
+}
+}
+
+stage ('starting up Tomcat server on Slave-1') {
+agent {
+node {
+		
+				label "172.31.28.75-Slave-1"
+				customWorkspace "/mnt/servers/apache-tomcat-9.0.65/bin"
+		
+}		
+}
+		
+steps {
+		sh " ./startup.sh"
+		
+}
+		
+}
+
+stage ('starting up Tomcat server on Slave-2') {
+agent {
+node {		
+				label "172.31.30.34-Slave-2"
+				customWorkspace "/mnt/servers/apache-tomcat-9.0.65/bin"
+		
+}		
+}
+		
+steps {
+		sh " ./startup.sh"
+		
+}
+		
+}
+
+
+
+
+
+}
+
+
+}
