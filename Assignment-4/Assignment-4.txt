@@ -1,0 +1,78 @@
+pipeline {
+
+agent {
+node {
+             label "172.31.30.34-Slave-2"
+			 customWorkspace "/mnt/servers"
+
+
+}
+}
+
+stages {
+
+stage ('stop Tomcat server') {
+steps {
+
+dir ("apache-tomcat-9.0.65/bin") {
+
+      sh "bash shutdown.sh"
+
+}
+
+}
+
+}
+
+stage ('clean war file from webapps') {
+steps {
+
+dir ("apache-tomcat-9.0.65/webapps") {
+
+     sh "sudo rm -rf gameoflife.war"
+
+}
+
+}
+}
+
+stage ('clean apache-tomcat logs') {
+
+steps {
+
+dir ("apache-tomcat-9.0.65/logs") {
+
+     sh "sudo rm -rf *"
+
+}
+
+}
+}
+
+
+stage ('Deploy war file into webapps dir') {
+steps {
+
+      sh "cp -r /mnt/projects/game-of-life-nup/gameoflife-web/target/gameoflife.war /mnt/servers/apache-tomcat-9.0.65/webapps"
+
+}
+
+}
+
+stage ('start Tomcat server') {
+steps {
+
+dir ("apache-tomcat-9.0.65/bin") {
+
+      sh "bash startup.sh"
+
+}
+
+}
+
+}
+
+
+}
+
+}
